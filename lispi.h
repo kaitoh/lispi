@@ -35,12 +35,18 @@ typedef int INT32;
 #define D() printf("%s %s:%d:\n",__FILE__,__func__, __LINE__)
 #define Ds(str) printf("%s %s:%d: %s\n",__FILE__, __func__, __LINE__, str)
 #define Dexit(i) printf("%s %s:%d:\n",__FILE__,__func__, __LINE__), exit(i)
+#define DUMPSTR(str) {\
+        unsigned char *p;\
+        for(p = str ;  *p != '\0' ; p++) { printf("%x, ",p); }\
+        printf("\n");\
+    }
 #else
 #define Denv(env)
 #define Dlist(l)
 #define D()
 #define Ds(str)
 #define Dexit(i) exit(i)
+#define DUMPSTR(str)
 #endif
 
 

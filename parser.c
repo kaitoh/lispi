@@ -25,7 +25,7 @@ char *strndup(const char *str, size_t len)
 	for(i = 0 ; i < len ; i++) {
 		s[i] = str[i];
 	}
-    s[i+1] = '\0';
+    s[i] = '\0';
 	return s;
 }
 
