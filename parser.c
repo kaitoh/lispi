@@ -20,11 +20,12 @@ static FILE *prog_fp;
 
 char *strndup(const char *str, size_t len)
 {
-	char *s = (char *)malloc(len);
+	char *s = (char *)malloc(len+1);
 	int i = 0;
 	for(i = 0 ; i < len ; i++) {
 		s[i] = str[i];
 	}
+    s[i+1] = '\0';
 	return s;
 }
 
