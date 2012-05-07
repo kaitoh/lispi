@@ -25,9 +25,9 @@ typedef struct _st_table_entry {
 } st_table_entry;
 
 typedef struct _st_hash_type {
-	int (*compare)();
-	int (*hash)();
-	int (*print)();
+	int (*compare)(void *v1, void *v2);
+	int (*hash)(void *v);
+	int (*print)(void *v);
 } st_hash_type;
 
 

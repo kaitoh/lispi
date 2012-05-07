@@ -5,7 +5,7 @@
 
 #include "objects.h"
 
-#define ISWORD(c) ( isprefix(c) || isdigit(c) || isspecial_suf(c) )
+#define ISWORD(c) ( isprefix(c) || li_isdigit(c) || isspecial_suf(c) )
 
 
 // ---------------- define for Lex --------------------
@@ -43,10 +43,10 @@ typedef struct _prog_buff {
 } prog_buff;
 
 
-extern VALUE parse();
-extern char *get_cl();
-extern void init_pbuff();
-void set_pbuff(char *);
-int read_file(FILE *);
+extern VALUE parse(void);
+extern char *get_cl(void);
+extern void init_pbuff(void);
+extern void set_pbuff(char *);
+extern void init_cl();
 
 #endif

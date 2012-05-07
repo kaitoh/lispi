@@ -175,7 +175,7 @@ VALUE spf_cond(VALUE c, environment *env)
 	while(LNil != (VALUE)p) { // each  "(exp body)"
 		Dlist(p);
 		pred = LCell( CAR(CAR(p)) );
-		if(list_len(CAR(p)) == 3 && !strcmp("=>", SYMBOL_NAME(CAR(CDR(CAR(p)))))) {
+		if(list_len(CAR(p)) == 3 && !li_strcmp("=>", SYMBOL_NAME(CAR(CDR(CAR(p)))))) {
 			is_arrowed = TRUE;
 			body = CAR(CDR(CDR((CAR(p)))));
 		} else {
@@ -183,7 +183,7 @@ VALUE spf_cond(VALUE c, environment *env)
 		}
 		Dlist(pred);
 		Dlist(body);
-		if( (!IS_SELF_EVALUATION(pred) && !strcmp("else", LSymbol(pred)->name) )
+		if( (!IS_SELF_EVALUATION(pred) && !li_strcmp("else", LSymbol(pred)->name) )
 				|| (exp_ret = eval((VALUE)pred, env)) != LFalse) {
 			if(is_arrowed) {
 				ret = eval( cons( body, cons(exp_ret, LNil)) , env );
@@ -358,8 +358,8 @@ VALUE pri_nop(VALUE c)
 // (cons 1 (2))
 VALUE pri_cons(VALUE c)
 {
-	Dlist(c);
 	LCell *new_c = new_LCell();
+	Dlist(c);
 	
 	new_c->car = CAR(c);
 	new_c->cdr = CAR(CDR(c));
@@ -437,9 +437,10 @@ VALUE pri_list(VALUE c)
 
 void print_list(const char *pre, VALUE v)
 {
-	printf(pre);
+	print_str(pre);
+	print_str(" ");
 	pri_display(v);
-	puts("\n");
+	println_str("");
 }
 
 VALUE pri_display(VALUE v)
@@ -451,31 +452,35 @@ VALUE pri_display(VALUE v)
 	}
 
 	if( LNil == p) {
-		printf("nil ");
+		print_str("nil ");
 	} else if (LTrue == p) {
-		printf("#t ");
+		print_str("#t ");
 	} else if (LFalse == p) {
-		printf("#f ");
+		print_str("#f ");
 	} else if(IS_FIXNUM(p)) {
-		printf("%ld ",FIX2INT(p));
+		print_int(FIX2INT(p));
+		print_str(" ");
 	} else if( !IS_IMMEDIATE(p) ) {
 		if( IS_STRING(p) ) {
-			printf("\"%s\" ",LString(p)->str);
+			print_str("\"");
+			print_str(LString(p)->str);
+			print_str("\" ");
 		} else if( IS_SYMBOL(p) ) {
-			printf("%s ",SYMBOL_NAME(p));
+			print_str(SYMBOL_NAME(p));
+			print_str(" ");
 		} else if (IS_CONSCELL(p)) {
-			printf("(");
+			print_str("(");
 			pri_display( CAR(p) );
-			printf(" . ");
+			print_str(" . ");
 			pri_display( CDR(p) );
-			printf(")");
+			print_str(")");
 		} else if (IS_LIST(p)) {
-			printf("(");
+			print_str("(");
 			while( LNil != p) {
 				pri_display(LCell(p)->car);
 				p = LCell(p)->cdr;
 			}
-			printf(") ");
+			print_str(") ");
 		}
 	}
 
@@ -484,7 +489,7 @@ VALUE pri_display(VALUE v)
 
 VALUE pri_exit(VALUE c)
 {
-	exit(0);
+	li_exit(0);
 	return 0;
 }
 

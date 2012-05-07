@@ -1,6 +1,4 @@
 
-#include <readline/readline.h>
-#include <readline/history.h>
 #include "lispi.h"
 #include "parser.h"
 #include "hash.h"
@@ -15,17 +13,16 @@ static char *peek_p();
 static VALUE read_next(token *t);
 
 static prog_buff p_buff;
-static FILE *prog_fp;
 
 
-char *strndup(const char *str, size_t len)
+char *strndup(const char *str, int len)
 {
-	char *s = (char *)malloc(len+1);
+	char *s = (char *)Malloc(len+1);
 	int i = 0;
 	for(i = 0 ; i < len ; i++) {
 		s[i] = str[i];
 	}
-    s[i] = '\0';
+    s[i+1] = '\0';
 	return s;
 }
 
@@ -69,7 +66,7 @@ int isspecial_suf(char c)
 
 int isprefix(char c)
 {
-	return (isspecial_pre(c) || isalpha(c));
+	return (isspecial_pre(c) || li_isalpha(c));
 }
 
 
@@ -103,14 +100,6 @@ enum tok isspacer_t(char c)
 unsigned int is_eol()
 {
 	unsigned char c = p_buff.buff[p_buff.i];
-	if( ('\0' == c || '\r' == c) && NULL != prog_fp) {
-		Ds("Next line");
-		if( -1 == read_file(prog_fp) ) {
-			D();
-			return TRUE;
-		}
-		c = p_buff.buff[p_buff.i];
-	}
 	return ('\0' == c || NULL == c || ';' == c);
 }
 char *peek_p()
@@ -124,11 +113,6 @@ unsigned char peek()
 unsigned char get()
 {
 	unsigned char c = p_buff.buff[p_buff.i];
-	if( ('\0' == c || '\n' == c) && NULL != prog_fp) {
-		Ds("Next line");
-		read_file(prog_fp);
-		c = p_buff.buff[p_buff.i];
-	}
 	p_buff.i++;
 	return c;
 }
@@ -138,21 +122,17 @@ char nextc()
 }
 char back()
 {
+	char c;
 	if(p_buff.i <= 0) return '\0';
 
-	char c = p_buff.buff[p_buff.i-1];
+	c = p_buff.buff[p_buff.i-1];
 	p_buff.i--;
 	return c;
 }
 char skip_space()
 {
 	char c = p_buff.buff[p_buff.i];
-	while(c != '\0' && isspace(c)) {
-		if( ('\0' == c || '\r' == c || '\n' == c) && NULL != prog_fp) {
-			Ds("Next line");
-			read_file(prog_fp);
-			c = p_buff.buff[p_buff.i];
-		}
+	while(c != '\0' && li_isspace(c)) {
 		p_buff.i++;
 		c = p_buff.buff[p_buff.i];
 	}
@@ -166,7 +146,7 @@ char *get_string()
 	char *ret;
 
 	s = peek_p();
-	e = strchr(s, '"');
+	e = li_strchr(s, '"');
 	if(NULL != e) {
 		ret = strndup(s, e-s);
 		p_buff.i += (e-s)+1;
@@ -183,7 +163,8 @@ token *scanner()
 {
 	const char *s; 
 	unsigned char c;
-	size_t n = 0;
+	int n = 0;
+	enum tok ttype = NUM_TOK;
 	token *t = OBJ_Malloc(token);
 
 	t->type = NUM_TOK;
@@ -194,7 +175,6 @@ token *scanner()
 
 	s = peek_p();
 	c = get();
-	enum tok ttype = NUM_TOK;
 	if( (ttype = isspacer_t(c)) ) { // ( ) ; "
 		t->type = ttype;
 		n++;
@@ -208,7 +188,7 @@ token *scanner()
 		int num = 0;
 		int pogneg = 1;
 		unsigned char st = 0;
-		if(isdigit(c)) {
+		if(li_isdigit(c)) {
 			st = 1;
 			num = c - '0';
 			t->type = tNUM;
@@ -228,7 +208,7 @@ token *scanner()
 			n++;
 			switch(st) {
 				case 1: // num
-					if(isdigit(c)) {
+					if(li_isdigit(c)) {
 						num = num*10 + c - '0';
 					} else {
 						t->type = tID; 
@@ -236,7 +216,7 @@ token *scanner()
 					}
 					break;
 				case 2:
-					if(isdigit(c)) {
+					if(li_isdigit(c)) {
 						num = c - '0';
 						t->type = tNUM;
 						st = 1;
@@ -250,7 +230,7 @@ token *scanner()
 					break;
 				default: 
 					D();
-					exit(1);
+					li_exit(1);
 					break;
 			}
 			c = get();
@@ -263,9 +243,11 @@ token *scanner()
 		}
 		return t;
 	} else {
-		printf("--%c--",c);
+		print_str("--");
+		print_int(c);
+		print_str("--");
 		D();
-		exit(-1);
+		li_exit(-1);
 	}
 	t->val = (VALUE)strndup(s, n);
 	return t;
@@ -334,9 +316,9 @@ VALUE read_next(token *t)
 			p = INT2FIX(t->val);
 			break;
 		case tID:
-			if(!strcmp("#f", (char *)t->val)) p = LFalse;
-			else if(!strcmp("#t", (char *)t->val)) p = LTrue;
-			else if(!strcmp("nil", (char *)t->val)) p = LNil;
+			if(!li_strcmp("#f", (char *)t->val)) p = LFalse;
+			else if(!li_strcmp("#t", (char *)t->val)) p = LTrue;
+			else if(!li_strcmp("nil", (char *)t->val)) p = LNil;
 			else p = (VALUE)new_LSymbol((const char *)(t->val));
 			break;
 		default:
@@ -358,7 +340,7 @@ VALUE parse()
 void set_pbuff(char *str)
 {
 	p_buff.buff = str;
-	p_buff.size = strlen(str);
+	p_buff.size = li_strlen(str);
 	p_buff.i = 0;
 }
 
@@ -366,29 +348,21 @@ void set_pbuff(char *str)
  * @return 0: read success, -1: EOF
  */
 #define BUFF_SIZE 1024
-int read_file(FILE *fp)
-{
-	if( NULL != p_buff.buff )
-		free(p_buff.buff);
 
-	prog_fp = fp;
-	p_buff.buff = (char *)malloc(sizeof(char)*BUFF_SIZE);
-	if( NULL == fgets(p_buff.buff, BUFF_SIZE, prog_fp) ) {
-		p_buff.buff[0] = '\0';
-		return -1;
-	}
-	p_buff.size = strlen(p_buff.buff);
-	p_buff.i = 0;
-	return p_buff.size;
+void init_cl()
+{
+	p_buff.buff = (char *)Malloc(sizeof(char)*BUFF_SIZE);
 }
 
 char *get_cl()
 {
 	const char *prompt = "li> ";
-	p_buff.buff = readline(prompt);
-	p_buff.size = strlen(p_buff.buff);
+
+    print_str(prompt);
+	get_line(p_buff.buff, BUFF_SIZE);
+	p_buff.size = li_strlen(p_buff.buff);
 	p_buff.i = 0;
-	add_history(p_buff.buff);
+
 	return p_buff.buff;
 }
 

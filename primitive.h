@@ -11,11 +11,11 @@ typedef VALUE (*spf_proc)(VALUE , environment *);
 
 typedef struct _proc_tag {
 	const char *proc_name;
-	VALUE (*proc)();
+	VALUE (*proc)(void);
 } proc_tag;
 
 
-extern VALUE (*nop)();
+extern VALUE (*nop)(void);
 extern LCell *concat(LCell *, VALUE);
 extern void print_list(const char *, VALUE);
 extern void init_spf_tbl(st_table **);

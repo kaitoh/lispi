@@ -32,7 +32,7 @@ LString *new_LString(const char *str)
 	return c;
 }
 
-LCell *new_LCell()
+LCell *new_LCell(void)
 {
 	LCell *c = OBJ_Malloc(LCell);
 	if(NULL == c) Dexit(1); 

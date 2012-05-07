@@ -5,44 +5,51 @@
 
 
 // -------------------- hash ----------------
-static int strhash(char *str);
-static int str_print(char *str);
-static int numcmp(long n, long m);
-static int numhash(long n);
-static int num_print(long n);
+static int stringcmp(void *s1, void *s2);
+static int strhash(void *str);
+static int str_print(void *str);
+static int numcmp(void *n, void *m);
+static int numhash(void *n);
+static int num_print(void *n);
 
 // key type of hash table
-static st_hash_type hash_type_str = { strcmp, strhash, str_print };
+static st_hash_type hash_type_str = { stringcmp, strhash, str_print };
 static st_hash_type hash_type_num = { numcmp, numhash, num_print };
 
 
-int strhash(char *str)
+static int stringcmp(void *s1, void *s2)
+{
+    return li_strcmp((const char *)s1, (const char *)s2);
+}
+
+static int strhash(void *str)
 {
     register int val = 0;
 	char c;
-	while ((c = *str++) != '\0') {
+    char *str2 = (char *)str;
+	while ((c = *str2++) != '\0') {
 		val = val*997 + c;
 	}
 	return val + (val>>5);
 }
 
-int str_print(char *str)
+static int str_print(void *str)
 {
-	printf("%s\n",str);
+	println_str((char *)str);
 	return 0;
 }
 
-int numcmp(long n, long m)
+static int numcmp(void *n, void *m)
 {
-	return n != m;
+	return (long)n != (long)m;
 }
-int numhash(long n)
+static int numhash(void *n)
 {
-	return n;
+	return (long)n;
 }
-int num_print(long n)
+static int num_print(void *n)
 {
-	printf("%ld\n",n);
+	println_int((long)n);
 	return 0;
 }
 
@@ -80,30 +87,31 @@ static void rehash(st_table *table)
 		st_table_entry *next;
 		st_table_entry *entry = table->bins[i];
 		while(entry) {
-			next = entry->next;
 			int pos = entry->hash % new_num_bins;
+			next = entry->next;
 			entry->next = new_bins[pos];
 			new_bins[pos] = entry;
 			entry = next;
 		}
 	}
-	free(table->bins);
+	li_free(table->bins);
 	table->bins = new_bins;
 	table->num_bins = new_num_bins;
 }
 
-#define do_hash(t,k) (unsigned int)t->type->hash(k)
-#define EQUAL(t,k1,k2) ((k1) == (k2) || t->type->compare(k1,k2) == 0)
+#define do_hash(t,k) (unsigned int)t->type->hash((void *)(k))
+#define EQUAL(t,k1,k2) ((k1) == (k2) || t->type->compare((void*)(k1),(void*)(k2)) == 0)
 int st_add_direct(st_table *table, long key, long val)
 {
 	long hash, pos;
+	st_table_entry *new_entry;
 
 	hash = do_hash(table, key);
 	if(0 == table->num_bins || table->num_entries / table->num_bins > HASH_MAX_DENCITY) {
 		rehash(table);
 	}
+	new_entry = (st_table_entry *)Malloc(sizeof(st_table_entry));
 	pos = do_hash(table, key) % table->num_bins;
-	st_table_entry *new_entry = (st_table_entry *)Malloc(sizeof(st_table_entry));
 	new_entry->hash = hash;
 	new_entry->key = key;
 	new_entry->record = val;
@@ -117,10 +125,11 @@ int st_add_direct(st_table *table, long key, long val)
 st_table_entry *st_lookup(st_table *table, long key, long *ret)
 {
 	long pos;
+	st_table_entry *p;
 	if(0 == table->num_entries) return NULL;
 
 	pos = do_hash(table,key) % table->num_bins;
-	st_table_entry *p = table->bins[pos];
+	p = table->bins[pos];
 	while(p) {
 		if(EQUAL(table, key, p->key)){
 			*ret = p->record;
@@ -179,8 +188,8 @@ void print_hash(st_table *table)
 	for(i = 0 ; i < table->num_bins ; i++) {
 		st_table_entry *p = table->bins[i];
 		while(p) {
-			printf("hash:0x%x, val:%ld ",p->hash, (long)p->record);
-			table->type->print(p->key);
+			//printf("hash:0x%x, val:%ld ",p->hash, (long)p->record);
+			table->type->print((void *)(p->key));
 			p = p->next;
 		}
 	}

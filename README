@@ -1,1 +1,6 @@
-gcc *.c -lreadline -Wall
+
+Compile: 
+    gcc *.c -lreadline -Wall
+
+Test:
+    Copy & Paste a line in test.li

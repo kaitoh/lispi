@@ -2,6 +2,7 @@
 #ifndef OBJECTS_H
 #define OBJECTS_H
 
+#include "lispi.h"
 #include "hash.h"
 
 // ---------------- define for some type of Object --------------------
@@ -11,7 +12,6 @@
  */
 typedef unsigned long VALUE;
 typedef unsigned long ID;
-
 
 #define LFalse 0 // => #f
 #define LTrue 2 // => #t, not #f
@@ -115,7 +115,7 @@ typedef struct _lproc {
 
 
 extern unsigned int list_len(VALUE v);
-extern LCell *new_LCell();
+extern LCell *new_LCell(void);
 extern LSymbol *new_LSymbol(const char *);
 extern LString *new_LString(const char *);
 extern LProc *new_LProc(environment *);

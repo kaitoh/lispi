@@ -86,7 +86,8 @@ VALUE eval(VALUE s, environment *env)
 	} else if(IS_VARIABLE(s)) {
 		val = lookup_variable(s, env);
 		if(IS_UNDEF(val)) {
-			printf("#<undef>: %s\n\n",LSymbol(s)->name);
+            Denv(env);
+			print_str("#<undef>: "), print_str(LSymbol(s)->name), println_str("");
 		}
 		return val;
 	} else if(IS_LIST(s)) {
@@ -99,7 +100,7 @@ VALUE eval(VALUE s, environment *env)
 		}
 	} else {
 		Ds("Unexpected");
-		exit(-1);
+		li_exit(-1);
 	}
 	return LUndef;
 }
@@ -125,17 +126,19 @@ VALUE apply(VALUE proc, VALUE args)
 	Dlist(proc);
 	Dlist(args);
 	if( is_pri_proc(proc) ) {
-		D();
 		VALUE v;
+		D();
 		v = apply_pri_proc(proc, args);
 		Dlist(v);
 		return v;
 	} else if( IS_UNDEF(proc) ) {
 		return LUndef;
 	} else if( !IS_ATOM(proc) && IS_PROC(proc) ){
-		D();
 		VALUE ret;
-		environment *e = extend_env(CAR(proc), args, LProc(proc)->env); 
+		environment *e;
+
+		D();
+		e = extend_env(CAR(proc), args, LProc(proc)->env); 
 		ret = eval(CAR(CDR(proc)), e);
 		FREE_ENV(e);
 		return ret;
@@ -146,7 +149,7 @@ VALUE apply(VALUE proc, VALUE args)
 }
 
 
-environment *init_top_env()
+environment *init_top_env(void)
 {
 	init_spf_tbl(&spf_tbl);
 	init_pri_tbl(&pri_tbl);
@@ -160,10 +163,10 @@ void print_env(environment *env)
 {
 	environment *e = env;
 
-	printf("---\n");
+	println_str("---");
 	while(NULL != e) {
 		print_hash(e->symbol_tbl);
-		printf("---\n");
+		println_str("---");
 		e = e->super;
 	}
 }
